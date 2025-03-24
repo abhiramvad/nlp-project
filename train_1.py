@@ -1,17 +1,18 @@
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM
-
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoModelForSequenceClassification , Trainer, TrainingArguments
 dataset = load_dataset("open-web-math/open-web-math")
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.2-3B",use_auth_token=True)
+
+model_name = "meta-llama/Llama-3.2-3B"
+
+tokenizer = AutoTokenizer.from_pretrained(model_name,use_auth_token=True)
 
 print("Loading model...")
-
-model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.2-3B",device="auto")
+model = AutoModelForSequenceClassification.from_pretrained(model_name, device_map="auto")
 
 print("Model loaded successfully!")
 
-import torch
-from transformers import Trainer, TrainingArguments
+print("Splitting Data")
 
 split_dataset = dataset["train"].train_test_split(test_size=0.05, seed=42)
 train_dataset = split_dataset["train"]
@@ -33,6 +34,7 @@ def tokenize_function(examples):
 tokenized_train_dataset = train_dataset.map(tokenize_function, batched=True)
 tokenized_eval_dataset = eval_dataset.map(tokenize_function, batched=True)
 
+print("Trainning")
 # Define training arguments
 training_args = TrainingArguments(
     output_dir="./llama3-math-pretrain-small",
